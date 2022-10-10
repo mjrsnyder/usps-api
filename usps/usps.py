@@ -17,6 +17,7 @@ class USPSApi(object):
         'tracking': 'TrackV2{test}&XML={xml}',
         'label': 'eVS{test}&XML={xml}',
         'validate': 'Verify&XML={xml}',
+        'request_pod': 'PTSPod&XML={xml}'
     }
 
     def __init__(self,  api_user_id, test=False):
@@ -48,6 +49,8 @@ class USPSApi(object):
     def create_label(self, *args, **kwargs):
         return ShippingLabel(self, *args, **kwargs)
 
+    def request_proof_of_delivery(self, *args, **kwargs):
+        return ProofOfDelivery(self, *args, **kwargs)
 
 class AddressValidate(object):
 
@@ -127,3 +130,17 @@ class ShippingLabel(object):
         image.text = 'PDF'
 
         self.result = usps.send_request('label', xml)
+
+class ProofOfDelivery(object):
+    def __init__(self, usps, tracking_id, mp_suffix, mp_date, first_name, last_name, email, **kwargs):
+        xml = etree.Element('PTSPodRequest', {'USERID' : usps.api_user_id})
+        etree.SubElement(xml, 'TrackId').text = tracking_id
+        etree.SubElement(xml, 'MpSuffix').text = mp_suffix
+        etree.SubElement(xml, 'MpDate').text = mp_date
+        etree.SubElement(xml, 'RequestType').text = 'Email'
+        etree.SubElement(xml, 'FirstName').text = first_name
+        etree.SubElement(xml, 'LastName').text = last_name
+        etree.SubElement(xml, 'Email1').text = email
+        etree.SubElement(xml, 'TableCode').text = 'T'
+
+        self.result = usps.send_request('request_pod', xml)
